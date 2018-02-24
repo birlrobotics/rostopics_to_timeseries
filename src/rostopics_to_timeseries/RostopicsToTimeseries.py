@@ -5,6 +5,8 @@ import copy
 import numpy as np
 import ipdb
 import std_msgs.msg
+import rosbag
+from scipy.interpolate import interp1d
 
 TOPIC_NAME_IDX = 0
 TOPIC_MSG_TYPE_IDX = 1
@@ -29,7 +31,7 @@ class RostopicsToTimeseries(object):
                         lambda m: [m.wrench.force.x, m.wrench.force.y, m.wrench.force.z],
                     ),
                 ] 
-
+        rate: Rate of time series in Hz.
     """
 
     def __init__(self, topics_info, rate):
@@ -80,9 +82,42 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
             r.sleep()
 
 class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
-    def __init__(self, topics_info, rate, path_to_rosbag):
+    def __init__(self, topics_info, rate):
         super(OfflineRostopicsToTimeseries, self).__init__(topics_info, rate)
         pass
+
+    def get_timeseries_mat(self, path_to_rosbag):
+        bag = rosbag.Bag(path_to_rosbag)        
+        start_time = bag.get_start_time()
+        end_time = bag.get_end_time()
+        new_x = np.arange(start_time, end_time, 1.0/self.rate)
+
+        mats = []
+        for tu in self.topics_info:
+            topic_name = tu[TOPIC_NAME_IDX]
+            topic_cb = tu[TOPIC_CB_IDX]
+            x = []
+            mat = []
+            for topic, msg, t, in bag.read_messages(topics=[topic_name]):
+                x.append(t.to_sec())
+                mat.append(topic_cb(msg))
+        
+            mat = np.array(mat)
+
+            f = interp1d(x, mat, axis=0, kind='nearest', fill_value='extrapolate', assume_sorted=True)
+
+            new_mat = f(new_x)
+
+            mats.append(new_mat)
+
+        big_mat = np.concatenate(mats, axis=1)
+        return new_x, big_mat
+
+
+
+
+
+
 
 
 
