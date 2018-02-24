@@ -4,6 +4,7 @@ from rostopics_to_timeseries.msg import Timeseries
 import copy
 import numpy as np
 import ipdb
+import std_msgs.msg
 
 TOPIC_NAME_IDX = 0
 TOPIC_MSG_TYPE_IDX = 1
@@ -59,10 +60,10 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
             )
         rospy.sleep(1)
         
-    def start_publishing(self):
+    def start_publishing_timeseries(self, topic_name):
         self._setup_listener()
 
-        pub = rospy.Publisher("/rostopics_to_timeseries_topic", Timeseries, queue_size=1000)
+        pub = rospy.Publisher(topic_name, Timeseries, queue_size=1000)
 
         r = rospy.Rate(self.rate)
         while not rospy.is_shutdown():
@@ -70,7 +71,9 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
             sample = copy.deepcopy(self.filtered_msgs)            
             self.writable.set()
             try:
-                msg = Timeseries(np.concatenate(sample)) 
+                h = std_msgs.msg.Header()
+                h.stamp = rospy.Time.now()
+                msg = Timeseries(h, np.concatenate(sample)) 
                 pub.publish(msg)
             except ValueError:
                 rospy.logerr("Cannot concatenate %s"%sample)

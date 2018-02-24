@@ -17,5 +17,5 @@ if __name__ == '__main__':
             lambda m: [m.wrench.force.x, m.wrench.force.y, m.wrench.force.z],
         ),
     ] 
-    ort = OnlineRostopicsToTimeseries(topic_info, rate=100) 
-    ort.start_publishing()
+    ort = OnlineRostopicsToTimeseries(topic_info, rate=10) 
+    ort.start_publishing_timeseries("/rostopics_to_timeseries_topic")
