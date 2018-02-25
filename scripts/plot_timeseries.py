@@ -42,7 +42,7 @@ if __name__ == '__main__':
     if dimension == 1:
         axs = [axs]
 
-    lns = [i.plot([], [], 'ro', animated=True)[0] for i in axs]
+    lns = [i.plot([], [], 'r', animated=True)[0] for i in axs]
 
     window_size_in_sec = 10
 

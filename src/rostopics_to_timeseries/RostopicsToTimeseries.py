@@ -79,7 +79,10 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
                 pub.publish(msg)
             except ValueError:
                 rospy.logerr("Cannot concatenate %s"%sample)
-            r.sleep()
+            try:
+                r.sleep()
+            except rospy.ROSInterruptException:
+                break
 
 class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
     def __init__(self, topics_info, rate):
