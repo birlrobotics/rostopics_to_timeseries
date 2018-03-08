@@ -72,13 +72,14 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
             self.writable.clear()
             sample = copy.deepcopy(self.filtered_msgs)            
             self.writable.set()
-            try:
-                h = std_msgs.msg.Header()
-                h.stamp = rospy.Time.now()
-                msg = Timeseries(h, np.concatenate(sample)) 
-                pub.publish(msg)
-            except ValueError:
-                rospy.logerr("Cannot concatenate %s"%sample)
+            if len(sample) != 0:
+                try:
+                    h = std_msgs.msg.Header()
+                    h.stamp = rospy.Time.now()
+                    msg = Timeseries(h, np.concatenate(sample)) 
+                    pub.publish(msg)
+                except ValueError:
+                    rospy.logerr("Cannot concatenate %s"%sample)
             try:
                 r.sleep()
             except rospy.ROSInterruptException:
