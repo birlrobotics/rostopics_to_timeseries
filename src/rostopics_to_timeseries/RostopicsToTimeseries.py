@@ -3,7 +3,6 @@ import threading
 from rostopics_to_timeseries.msg import Timeseries
 import copy
 import numpy as np
-import ipdb
 import std_msgs.msg
 import rosbag
 from scipy.interpolate import interp1d
