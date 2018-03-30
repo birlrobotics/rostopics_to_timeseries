@@ -60,7 +60,6 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
                 tu[TOPIC_MSG_TYPE_IDX],
                 cb_gen(TOPIC_IDX)
             )
-        rospy.sleep(1)
         
     def start_publishing_timeseries(self, topic_name):
         self._setup_listener()
