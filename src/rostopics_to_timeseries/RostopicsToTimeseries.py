@@ -35,10 +35,11 @@ class RostopicsToTimeseries(object):
     """
 
     def __init__(self, topics_info, rate):
-        for no, i in enumerate(topics_info):
-            if not issubclass(i[TOPIC_FILTER_IDX], TopicMsgFilter):
-                raise Exception("no.%s info in topics_info subclass
-
+        self.msg_filters = []
+        for no, info in enumerate(topics_info):
+            if not issubclass(info[TOPIC_FILTER_IDX], TopicMsgFilter):
+                raise Exception("Message filter class of no.%s info in topics_info is not a subclass of TopicMsgFilter.")
+            self.msg_filters.append(info[TOPIC_FILTER_IDX]())
         self.topics_info = topics_info
         self.rate = rate
 
@@ -54,7 +55,7 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
         def cb_gen(TOPIC_IDX):
             def cb(data):
                 if self.writable.is_set():
-                    self.filtered_msgs[TOPIC_IDX] = self.topics_info[TOPIC_IDX][TOPIC_FILTER_IDX](data)
+                    self.filtered_msgs[TOPIC_IDX] = self.msg_filters[TOPIC_IDX].convert(data)
                 else:
                     pass
             return cb
@@ -100,14 +101,13 @@ class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
         new_x = np.arange(start_time, end_time, 1.0/self.rate)
 
         mats = []
-        for tu in self.topics_info:
+        for idx, tu in enumerate(self.topics_info):
             topic_name = tu[TOPIC_NAME_IDX]
-            topic_cb = tu[TOPIC_FILTER_IDX]
             x = []
             mat = []
             for topic, msg, t, in bag.read_messages(topics=[topic_name]):
                 x.append(t.to_sec())
-                mat.append(topic_cb(msg))
+                mat.append(self.msg_filters[idx].convert(msg))
         
             mat = np.array(mat)
 

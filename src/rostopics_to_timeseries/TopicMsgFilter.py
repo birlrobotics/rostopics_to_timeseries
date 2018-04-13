@@ -14,13 +14,13 @@ class TopicMsgFilter(object):
 class BaxterEndpointStateFilter(TopicMsgFilter):
     def __init__(self):
         super(BaxterEndpointStateFilter, self).__init__()
-        self.recyclable_list = [None]*self.vector_size()
 
     def convert(self, msg):
-        self.recyclable_list[0] = msg.pose.position.x
-        self.recyclable_list[1] = msg.pose.position.y
-        self.recyclable_list[2] = msg.pose.position.z
-        return self.recyclable_list
+        return [\
+            msg.pose.position.x,\
+            msg.pose.position.y,\
+            msg.pose.position.z,\
+        ]
 
     def vector_size(self):
         return 3
@@ -31,16 +31,19 @@ class BaxterEndpointStateFilter(TopicMsgFilter):
 class WrenchStampedFilter(TopicMsgFilter):
     def __init__(self):
         super(WrenchStampedFilter, self).__init__()
-        self.recyclable_list = [None]*self.vector_size()
 
     def convert(self, msg):
-        self.recyclable_list[0] = msg.wrench.force.x
-        self.recyclable_list[1] = msg.wrench.force.y
-        self.recyclable_list[2] = msg.wrench.force.z
-        return self.recyclable_list
+        return [\
+            msg.wrench.force.x,\
+            msg.wrench.force.y,\
+            msg.wrench.force.z,\
+        ]
 
     def vector_size(self):
         return 3
 
     def vector_meaning(self):
         return ['wrench.force.%s'%i for i in ['x', 'y', 'z']] 
+
+
+
