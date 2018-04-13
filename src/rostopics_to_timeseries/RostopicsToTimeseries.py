@@ -6,34 +6,39 @@ import numpy as np
 import std_msgs.msg
 import rosbag
 from scipy.interpolate import interp1d
+from rostopics_to_timeseries.TopicMsgToVector import TopicMsgToVector
 
 TOPIC_NAME_IDX = 0
 TOPIC_MSG_TYPE_IDX = 1
-TOPIC_CB_IDX = 2
+TOPIC_FILTER_IDX = 2
 
 class RostopicsToTimeseries(object):
     """
     Args:
         topics_info: A list of tuples telling topics and fields 
             that you're interested. Each tuple contains a string 
-            of topic name, a class of message type and a callback 
-            function that filters each message. Example:
+            of topic name, a class of message type and a subclass
+            of TopicMsgToVector. Example:
                 [
                     (
                         "/robot/limb/right/endpoint_state", 
                         baxter_core_msgs.msg.EndpointState, 
-                        lambda m: [m.pose.position.x, m.pose.position.y, m.pose.position.z],
+                        BaxterEndpointStateToVector,
                     ),
                     (
                         "/robotiq_force_torque_wrench",
                         geometry_msgs.msg.WrenchStamped,
-                        lambda m: [m.wrench.force.x, m.wrench.force.y, m.wrench.force.z],
+                        WrenchStampedToVector,
                     ),
                 ] 
         rate: Rate of time series in Hz.
     """
 
     def __init__(self, topics_info, rate):
+        for no, i in enumerate(topics_info):
+            if not issubclass(i[TOPIC_FILTER_IDX], TopicMsgToVector):
+                raise Exception("no.%s info in topics_info subclass
+
         self.topics_info = topics_info
         self.rate = rate
 
@@ -49,7 +54,7 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
         def cb_gen(TOPIC_IDX):
             def cb(data):
                 if self.writable.is_set():
-                    self.filtered_msgs[TOPIC_IDX] = self.topics_info[TOPIC_IDX][TOPIC_CB_IDX](data)
+                    self.filtered_msgs[TOPIC_IDX] = self.topics_info[TOPIC_IDX][TOPIC_FILTER_IDX](data)
                 else:
                     pass
             return cb
@@ -97,7 +102,7 @@ class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
         mats = []
         for tu in self.topics_info:
             topic_name = tu[TOPIC_NAME_IDX]
-            topic_cb = tu[TOPIC_CB_IDX]
+            topic_cb = tu[TOPIC_FILTER_IDX]
             x = []
             mat = []
             for topic, msg, t, in bag.read_messages(topics=[topic_name]):

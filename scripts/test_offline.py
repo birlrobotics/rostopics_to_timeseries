@@ -1,6 +1,6 @@
 from rostopics_to_timeseries.RostopicsToTimeseries import OfflineRostopicsToTimeseries
+from rostopics_to_timeseries.TopicMsgToVector import TopicMsgToVector, BaxterEndpointStateToVector
 import baxter_core_msgs.msg
-import geometry_msgs.msg
 import rospy
 import matplotlib.pyplot as plt
 
@@ -9,12 +9,7 @@ if __name__ == '__main__':
         (
             "/robot/limb/right/endpoint_state", 
             baxter_core_msgs.msg.EndpointState, 
-            lambda m: [m.pose.position.x, m.pose.position.y, m.pose.position.z],
-        ),
-        (
-            "/robot/limb/right/endpoint_state",
-            geometry_msgs.msg.WrenchStamped,
-            lambda m: [m.wrench.force.x, m.wrench.force.y, m.wrench.force.z],
+            BaxterEndpointStateToVector,
         ),
     ] 
     ofrt = OfflineRostopicsToTimeseries(topic_info, rate=10) 
