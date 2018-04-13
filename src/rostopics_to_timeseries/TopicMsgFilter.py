@@ -1,4 +1,4 @@
-class TopicMsgToVector(object):
+class TopicMsgFilter(object):
     def __init__(self):
         pass
 
@@ -11,9 +11,9 @@ class TopicMsgToVector(object):
     def vector_meaning(self):
         raise Exception("Unimplemented")
 
-class BaxterEndpointStateToVector(TopicMsgToVector):
+class BaxterEndpointStateFilter(TopicMsgFilter):
     def __init__(self):
-        super(BaxterEndpointStateToVector, self).__init__()
+        super(BaxterEndpointStateFilter, self).__init__()
         self.recyclable_list = [None]*self.vector_size()
 
     def convert(self, msg):
@@ -28,9 +28,9 @@ class BaxterEndpointStateToVector(TopicMsgToVector):
     def vector_meaning(self):
         return ['pose.position.%s'%i for i in ['x', 'y', 'z']] 
 
-class WrenchStampedToVector(TopicMsgToVector):
+class WrenchStampedFilter(TopicMsgFilter):
     def __init__(self):
-        super(WrenchStampedToVector, self).__init__()
+        super(WrenchStampedFilter, self).__init__()
         self.recyclable_list = [None]*self.vector_size()
 
     def convert(self, msg):

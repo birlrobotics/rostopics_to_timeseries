@@ -6,7 +6,7 @@ import numpy as np
 import std_msgs.msg
 import rosbag
 from scipy.interpolate import interp1d
-from rostopics_to_timeseries.TopicMsgToVector import TopicMsgToVector
+from rostopics_to_timeseries.TopicMsgFilter import TopicMsgFilter
 
 TOPIC_NAME_IDX = 0
 TOPIC_MSG_TYPE_IDX = 1
@@ -18,17 +18,17 @@ class RostopicsToTimeseries(object):
         topics_info: A list of tuples telling topics and fields 
             that you're interested. Each tuple contains a string 
             of topic name, a class of message type and a subclass
-            of TopicMsgToVector. Example:
+            of TopicMsgFilter. Example:
                 [
                     (
                         "/robot/limb/right/endpoint_state", 
                         baxter_core_msgs.msg.EndpointState, 
-                        BaxterEndpointStateToVector,
+                        BaxterEndpointStateFilter,
                     ),
                     (
                         "/robotiq_force_torque_wrench",
                         geometry_msgs.msg.WrenchStamped,
-                        WrenchStampedToVector,
+                        WrenchStampedFilter,
                     ),
                 ] 
         rate: Rate of time series in Hz.
@@ -36,7 +36,7 @@ class RostopicsToTimeseries(object):
 
     def __init__(self, topics_info, rate):
         for no, i in enumerate(topics_info):
-            if not issubclass(i[TOPIC_FILTER_IDX], TopicMsgToVector):
+            if not issubclass(i[TOPIC_FILTER_IDX], TopicMsgFilter):
                 raise Exception("no.%s info in topics_info subclass
 
         self.topics_info = topics_info

@@ -1,5 +1,5 @@
 from rostopics_to_timeseries.RostopicsToTimeseries import OnlineRostopicsToTimeseries
-from rostopics_to_timeseries.TopicMsgToVector import TopicMsgToVector, BaxterEndpointStateToVector
+from rostopics_to_timeseries.TopicMsgFilter import TopicMsgFilter, BaxterEndpointStateFilter
 import baxter_core_msgs.msg
 import rospy
 
@@ -9,7 +9,7 @@ if __name__ == '__main__':
         (
             "/robot/limb/right/endpoint_state", 
             baxter_core_msgs.msg.EndpointState, 
-            BaxterEndpointStateToVector,
+            BaxterEndpointStateFilter,
         ),
     ] 
     onrt = OnlineRostopicsToTimeseries(topic_info, rate=10) 
