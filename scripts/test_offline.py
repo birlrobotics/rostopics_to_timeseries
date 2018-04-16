@@ -1,18 +1,18 @@
 from rostopics_to_timeseries.RostopicsToTimeseries import OfflineRostopicsToTimeseries
 from rostopics_to_timeseries.TopicMsgFilter import TopicMsgFilter, BaxterEndpointStateFilter
+from rostopics_to_timeseries.RosTopicFilteringConfig import RosTopicFilteringConfig
 import baxter_core_msgs.msg
 import rospy
 import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
-    topic_info = [
-        (
-            "/robot/limb/right/endpoint_state", 
-            baxter_core_msgs.msg.EndpointState, 
-            BaxterEndpointStateFilter,
-        ),
-    ] 
-    ofrt = OfflineRostopicsToTimeseries(topic_info, rate=10) 
+    tfc = RosTopicFilteringConfig()
+    tfc.add_filter(
+        "/robot/limb/right/endpoint_state", 
+        baxter_core_msgs.msg.EndpointState, 
+        BaxterEndpointStateFilter(),
+    )
+    ofrt = OfflineRostopicsToTimeseries(tfc, rate=10) 
     t, mat = ofrt.get_timeseries_mat("test_offline.bag")
 
     dimension = mat.shape[1] 

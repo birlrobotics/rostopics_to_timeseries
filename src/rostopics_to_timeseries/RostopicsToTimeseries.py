@@ -6,16 +6,10 @@ import numpy as np
 import std_msgs.msg
 import rosbag
 from scipy.interpolate import interp1d
-from rostopics_to_timeseries.TopicMsgFilter import TopicMsgFilter
-
-TOPIC_NAME_IDX = 0
-TOPIC_MSG_TYPE_IDX = 1
-TOPIC_FILTER_IDX = 2
-
 class RostopicsToTimeseries(object):
     """
     Args:
-        topics_info: A list of tuples telling topics and fields 
+        topic_filtering_config: A list of tuples telling topics and fields 
             that you're interested. Each tuple contains a string 
             of topic name, a class of message type and a subclass
             of TopicMsgFilter. Example:
@@ -34,36 +28,34 @@ class RostopicsToTimeseries(object):
         rate: Rate of time series in Hz.
     """
 
-    def __init__(self, topics_info, rate):
+    def __init__(self, topic_filtering_config, rate):
         self.msg_filters = []
-        for no, info in enumerate(topics_info):
-            if not issubclass(info[TOPIC_FILTER_IDX], TopicMsgFilter):
-                raise Exception("Message filter class of no.%s info in topics_info is not a subclass of TopicMsgFilter.")
-            self.msg_filters.append(info[TOPIC_FILTER_IDX]())
-        self.topics_info = topics_info
+        self.topic_filtering_config = topic_filtering_config
         self.rate = rate
 
 class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
-    def __init__(self, topics_info, rate):
-        super(OnlineRostopicsToTimeseries, self).__init__(topics_info, rate)
+    def __init__(self, topic_filtering_config, rate):
+        super(OnlineRostopicsToTimeseries, self).__init__(topic_filtering_config, rate)
         self.writable = threading.Event()
         self.writable.set()
 
     def _setup_listener(self):
-        self.filtered_msgs = [None]*len(self.topics_info)
-        self.subs = [None]*len(self.topics_info)
-        def cb_gen(TOPIC_IDX):
-            def cb(data):
-                if self.writable.is_set():
-                    self.filtered_msgs[TOPIC_IDX] = self.msg_filters[TOPIC_IDX].convert(data)
-                else:
-                    pass
-            return cb
-        for TOPIC_IDX, tu in enumerate(self.topics_info):
-            self.subs[TOPIC_IDX] = rospy.Subscriber(
-                tu[TOPIC_NAME_IDX],
-                tu[TOPIC_MSG_TYPE_IDX],
-                cb_gen(TOPIC_IDX)
+        self.filtered_msgs = [None]*self.topic_filtering_config.get_filter_amount()
+        self.subs = [None]*self.topic_filtering_config.get_filter_amount()
+        def cb(data, arg):
+            filter, filter_count = arg
+            if self.writable.is_set():
+                self.filtered_msgs[filter_count] = filter.convert(data)
+            else:
+                pass
+
+        for filter_count, i in enumerate(self.topic_filtering_config.iter_filters()):
+            topic_name, msg_type, filter = i
+            self.subs[filter_count] = rospy.Subscriber(
+                topic_name,
+                msg_type,
+                callback=cb,
+                callback_args=(filter, filter_count),
             )
         
     def start_publishing_timeseries(self, topic_name):
@@ -90,8 +82,8 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
                 break
 
 class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
-    def __init__(self, topics_info, rate):
-        super(OfflineRostopicsToTimeseries, self).__init__(topics_info, rate)
+    def __init__(self, topic_filtering_config, rate):
+        super(OfflineRostopicsToTimeseries, self).__init__(topic_filtering_config, rate)
         pass
 
     def get_timeseries_mat(self, path_to_rosbag):
@@ -101,13 +93,12 @@ class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
         new_x = np.arange(start_time, end_time, 1.0/self.rate)
 
         mats = []
-        for idx, tu in enumerate(self.topics_info):
-            topic_name = tu[TOPIC_NAME_IDX]
+        for topic_name, msg_type, filter in self.topic_filtering_config.iter_filters():
             x = []
             mat = []
             for topic, msg, t, in bag.read_messages(topics=[topic_name]):
                 x.append(t.to_sec())
-                mat.append(self.msg_filters[idx].convert(msg))
+                mat.append(filter.convert(msg))
         
             mat = np.array(mat)
 
@@ -119,13 +110,3 @@ class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
 
         big_mat = np.concatenate(mats, axis=1)
         return new_x, big_mat
-
-
-
-
-
-
-
-
-
-
