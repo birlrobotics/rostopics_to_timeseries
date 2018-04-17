@@ -42,16 +42,13 @@ if __name__ == '__main__':
     if dimension == 1:
         axs = [axs]
 
-    lns = [i.plot([], [], 'r', animated=True)[0] for i in axs]
-
     window_size_in_sec = 10
 
     xdata = []
     ydatas = [[] for i in range(dimension)]
-    xran = [None, None]
-    yran = [None, None]
+    yran = [0, 0]
     def update(frame):
-        global ms, xdata, ydata
+        global ms, xdata, ydata, yran
         writable.clear()
         samples = copy.deepcopy(ms)
         ms = []
@@ -76,12 +73,9 @@ if __name__ == '__main__':
 
             ax = axs[dim_idx]
             ax.set_xlim(xdata[0], xdata[-1])
-            ax.set_ylim(min(ydata), max(ydata))
+            yran = [min(yran[0], min(ydata)), max(yran[1], max(ydata))]
+            ax.set_ylim(yran[0]-1, yran[1]+1)
+            ax.plot(xdata, ydata, 'r')
 
-            ln = lns[dim_idx]
-            ln.set_data(xdata, ydata)
-              
-        return lns
-
-    ani = FuncAnimation(fig, update, interval=100, blit=True)
+    ani = FuncAnimation(fig, update, interval=100)
     plt.show()
