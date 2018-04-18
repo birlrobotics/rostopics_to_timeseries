@@ -36,18 +36,13 @@ class RostopicsToTimeseries(object):
 class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
     def __init__(self, topic_filtering_config, rate):
         super(OnlineRostopicsToTimeseries, self).__init__(topic_filtering_config, rate)
-        self.writable = threading.Event()
-        self.writable.set()
 
     def _setup_listener(self):
         self.filtered_msgs = [None]*self.topic_filtering_config.get_filter_amount()
         self.subs = [None]*self.topic_filtering_config.get_filter_amount()
         def cb(data, arg):
             filter, filter_count = arg
-            if self.writable.is_set():
-                self.filtered_msgs[filter_count] = filter.convert(data)
-            else:
-                pass
+            self.filtered_msgs[filter_count] = filter.convert(data)
 
         for filter_count, i in enumerate(self.topic_filtering_config.iter_filters()):
             topic_name, msg_type, filter = i
@@ -65,9 +60,7 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
 
         r = rospy.Rate(self.rate)
         while not rospy.is_shutdown():
-            self.writable.clear()
             sample = copy.deepcopy(self.filtered_msgs)            
-            self.writable.set()
             if len(sample) != 0:
                 try:
                     h = std_msgs.msg.Header()

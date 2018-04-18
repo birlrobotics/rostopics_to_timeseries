@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from rostopics_to_timeseries.RostopicsToTimeseries import OnlineRostopicsToTimeseries
 from rostopics_to_timeseries.TopicMsgFilter import TopicMsgFilter, BaxterEndpointStateFilter
 from rostopics_to_timeseries.RosTopicFilteringConfig import RosTopicFilteringConfig

@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import rospy
 from rostopics_to_timeseries.msg import Timeseries
 import numpy as np
