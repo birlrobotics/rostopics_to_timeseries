@@ -1,13 +1,13 @@
 from rostopics_to_timeseries.TopicMsgFilter import TopicMsgFilter
 
-class RosTopicFilteringConfig(object):
+class RosTopicFilteringScheme(object):
     def __init__(self):
         pass
         self.filters = []
 
     def add_filter(self, topic_name, msg_type, filter):
         if not issubclass(type(filter), TopicMsgFilter):
-            raise Exception("Message filter class of no.%s info in topic_filtering_config is not a subclass of TopicMsgFilter.")
+            raise Exception("Filter to be added is not of subclass of TopicMsgFilter.")
         self.filters.append(
             (
                 topic_name,
