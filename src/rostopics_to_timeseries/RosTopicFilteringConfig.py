@@ -20,18 +20,20 @@ class RosTopicFilteringConfig(object):
         for i in self.filters:     
             yield i[0], i[1], i[2]
     
-
-    def get_timeseries_header(self):
+    @property
+    def timeseries_header(self):
         names = []
         for tn, mt, fi in self.iter_filters():
             names.extend(fi.vector_meaning())
         return names
 
-    def get_timeseries_size(self):
+    @property
+    def timeseries_size(self):
         size = 0
         for tn, mt, fi in self.iter_filters():
             size += fi.vector_size()
         return size
 
-    def get_filter_amount(self):
+    @property
+    def filter_amount(self):
         return len(self.filters)
