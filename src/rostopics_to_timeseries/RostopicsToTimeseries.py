@@ -79,17 +79,22 @@ class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
         super(OfflineRostopicsToTimeseries, self).__init__(topic_filtering_config, rate)
         pass
 
-    def get_timeseries_mat(self, path_to_rosbag):
-        bag = rosbag.Bag(path_to_rosbag)        
-        start_time = bag.get_start_time()
-        end_time = bag.get_end_time()
-        new_x = np.arange(start_time, end_time, 1.0/self.rate)
+    def get_timeseries_mat(self, path_to_rosbag, start_time=None, end_time=None):
+        if type(path_to_rosbag) == rosbag.Bag:
+            bag = path_to_rosbag
+        else:
+            bag = rosbag.Bag(path_to_rosbag)        
+        if start_time is None:
+            start_time = bag.get_start_time()
+        if end_time is None:
+            end_time = bag.get_end_time()
+        new_x = np.arange(start_time.to_sec(), end_time.to_sec(), 1.0/self.rate)
 
         mats = []
         for topic_name, msg_type, filter in self.topic_filtering_config.iter_filters():
             x = []
             mat = []
-            for topic, msg, t, in bag.read_messages(topics=[topic_name]):
+            for topic, msg, t, in bag.read_messages(topics=[topic_name], start_time=start_time, end_time=end_time):
                 x.append(t.to_sec())
                 mat.append(filter.convert(msg))
         
