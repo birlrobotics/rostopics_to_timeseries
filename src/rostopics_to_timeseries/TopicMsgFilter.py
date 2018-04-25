@@ -11,6 +11,9 @@ class TopicMsgFilter(object):
     def vector_meaning(self):
         raise Exception("Unimplemented")
 
+    def get_time(self, msg):
+        return msg.header.stamp
+
 class BaxterEndpointStateFilter(TopicMsgFilter):
     def __init__(self):
         super(BaxterEndpointStateFilter, self).__init__()

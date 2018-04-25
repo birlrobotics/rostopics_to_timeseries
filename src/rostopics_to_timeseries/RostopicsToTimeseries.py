@@ -100,9 +100,19 @@ class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
         for topic_name, msg_type, filter in self.topic_filtering_config.iter_filters():
             x = []
             mat = []
-            for topic, msg, t, in bag.read_messages(topics=[topic_name], start_time=start_time, end_time=end_time):
-                x.append(t.to_sec())
-                mat.append(filter.convert(msg))
+            for topic, msg, record_t, in bag.read_messages(topics=[topic_name], start_time=None, end_time=None):
+                try: 
+                    t = filter.get_time(msg)
+                except AttributeError:
+                    t = record_t
+
+                if start_time is not None and t < start_time:
+                    continue
+                elif end_time is not None and t > end_time:
+                    break
+                else:
+                    x.append(t.to_sec())
+                    mat.append(filter.convert(msg))
         
             if len(mat) == 0:
                 raise Exception("No msg of topic %s in %s"%(topic_name, bag.filename))
