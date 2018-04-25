@@ -84,11 +84,17 @@ class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
             bag = path_to_rosbag
         else:
             bag = rosbag.Bag(path_to_rosbag)        
+
         if start_time is None:
-            start_time = bag.get_start_time()
+            rstart = bag.get_start_time()
+        else:
+            rstart = start_time.to_sec()
         if end_time is None:
-            end_time = bag.get_end_time()
-        new_x = np.arange(start_time.to_sec(), end_time.to_sec(), 1.0/self.rate)
+            rend = bag.get_end_time()
+        else:
+            rend = end_time.to_sec()
+
+        new_x = np.arange(rstart, rend, 1.0/self.rate)
 
         mats = []
         for topic_name, msg_type, filter in self.topic_filtering_config.iter_filters():
