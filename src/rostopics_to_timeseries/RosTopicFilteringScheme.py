@@ -5,14 +5,14 @@ class RosTopicFilteringScheme(object):
         pass
         self.filters = []
 
-    def add_filter(self, topic_name, msg_type, filter):
-        if not issubclass(type(filter), TopicMsgFilter):
+    def add_filter(self, topic_name, msg_type, filter_class):
+        if not issubclass(filter_class, TopicMsgFilter):
             raise Exception("Filter to be added is not of subclass of TopicMsgFilter.")
         self.filters.append(
             (
                 topic_name,
                 msg_type,
-                filter,
+                filter_class,
             )
         )
 
@@ -52,11 +52,11 @@ class RosTopicFilteringScheme(object):
         info = ""
         info += "filtering scheme info\n"
         self._indent(+1)
-        for topic_name, msg_type, filter in self.iter_filters():
+        for topic_name, msg_type, filter_class in self.iter_filters():
             info += self._indent()+topic_name+'\n'
             self._indent(+1)
             info += self._indent()+str(msg_type)+'\n'
-            info += self._indent()+str(filter.vector_meaning())+'\n'
+            info += self._indent()+str(filter_class.vector_meaning())+'\n'
             self._indent(-1)
         self._indent(-1)
         info += "\n"

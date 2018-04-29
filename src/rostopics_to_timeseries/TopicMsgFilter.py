@@ -5,13 +5,16 @@ class TopicMsgFilter(object):
     def convert(self, msg):
         raise Exception("Unimplemented")
 
-    def vector_size(self):
+    @staticmethod
+    def vector_size():
         raise Exception("Unimplemented")
 
-    def vector_meaning(self):
+    @staticmethod
+    def vector_meaning():
         raise Exception("Unimplemented")
 
-    def get_time(self, msg):
+    @staticmethod
+    def get_time(msg):
         return msg.header.stamp
 
 class BaxterEndpointStateFilter(TopicMsgFilter):
@@ -25,10 +28,12 @@ class BaxterEndpointStateFilter(TopicMsgFilter):
             msg.pose.position.z,\
         ]
 
-    def vector_size(self):
+    @staticmethod
+    def vector_size():
         return 3
 
-    def vector_meaning(self):
+    @staticmethod
+    def vector_meaning():
         return ['pose.position.%s'%i for i in ['x', 'y', 'z']] 
 
 class WrenchStampedFilter(TopicMsgFilter):
@@ -42,10 +47,12 @@ class WrenchStampedFilter(TopicMsgFilter):
             msg.wrench.force.z,\
         ]
 
-    def vector_size(self):
+    @staticmethod
+    def vector_size():
         return 3
 
-    def vector_meaning(self):
+    @staticmethod
+    def vector_meaning():
         return ['wrench.force.%s'%i for i in ['x', 'y', 'z']] 
 
 

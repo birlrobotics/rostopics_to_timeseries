@@ -38,19 +38,20 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
         super(OnlineRostopicsToTimeseries, self).__init__(topic_filtering_config, rate)
 
     def _setup_listener(self):
-        self.filtered_msgs = [None]*self.topic_filtering_config.get_filter_amount()
-        self.subs = [None]*self.topic_filtering_config.get_filter_amount()
+        self.filtered_msgs = [None]*self.topic_filtering_config.filter_amount
+        self.subs = [None]*self.topic_filtering_config.filter_amount
         def cb(data, arg):
-            filter, filter_count = arg
-            self.filtered_msgs[filter_count] = filter.convert(data)
+            filter_ins, filter_count = arg
+            self.filtered_msgs[filter_count] = filter_ins.convert(data)
 
         for filter_count, i in enumerate(self.topic_filtering_config.iter_filters()):
-            topic_name, msg_type, filter = i
+            topic_name, msg_type, filter_class = i
+            filter_ins = filter_class()
             self.subs[filter_count] = rospy.Subscriber(
                 topic_name,
                 msg_type,
                 callback=cb,
-                callback_args=(filter, filter_count),
+                callback_args=(filter_ins, filter_count),
             )
         
     def start_publishing_timeseries(self, topic_name):
@@ -97,12 +98,13 @@ class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
         new_x = np.arange(rstart, rend, 1.0/self.rate)
 
         mats = []
-        for topic_name, msg_type, filter in self.topic_filtering_config.iter_filters():
+        for topic_name, msg_type, filter_class in self.topic_filtering_config.iter_filters():
             x = []
             mat = []
+            filter_ins = filter_class()
             for topic, msg, record_t, in bag.read_messages(topics=[topic_name], start_time=None, end_time=None):
                 try: 
-                    t = filter.get_time(msg)
+                    t = filter_ins.get_time(msg)
                 except AttributeError:
                     t = record_t
 
@@ -112,7 +114,7 @@ class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
                     break
                 else:
                     x.append(t.to_sec())
-                    mat.append(filter.convert(msg))
+                    mat.append(filter_ins.convert(msg))
         
             if len(mat) == 0:
                 raise Exception("No msg of topic %s in %s"%(topic_name, bag.filename))
