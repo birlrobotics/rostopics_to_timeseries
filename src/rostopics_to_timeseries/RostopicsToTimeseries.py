@@ -6,6 +6,9 @@ import numpy as np
 import std_msgs.msg
 import rosbag
 from scipy.interpolate import interp1d
+import bisect
+import ipdb
+
 class RostopicsToTimeseries(object):
     """
     Args:
@@ -80,6 +83,23 @@ class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
         super(OfflineRostopicsToTimeseries, self).__init__(topic_filtering_config, rate)
         pass
 
+    def _get_topic_msgs(self, bag, topic_name):
+        if not hasattr(bag, "cache"):
+            bag.cache = {}
+        if topic_name not in bag.cache:
+            times = []
+            msgs = []            
+            for topic, msg, record_t, in bag.read_messages(topics=[topic_name], start_time=None, end_time=None):
+                try: 
+                    t = msg.header.stamp
+                except AttributeError:
+                    t = record_t
+                times.append(t.to_sec())
+                msgs.append(msg)
+            bag.cache[topic_name] = (times, msgs)
+
+        return bag.cache[topic_name]
+
     def get_timeseries_mat(self, path_to_rosbag, start_time=None, end_time=None):
         if type(path_to_rosbag) == rosbag.Bag:
             bag = path_to_rosbag
@@ -102,20 +122,14 @@ class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
             x = []
             mat = []
             filter_ins = filter_class()
-            for topic, msg, record_t, in bag.read_messages(topics=[topic_name], start_time=None, end_time=None):
-                try: 
-                    t = filter_ins.get_time(msg)
-                except AttributeError:
-                    t = record_t
 
-                if start_time is not None and t < start_time:
-                    continue
-                elif end_time is not None and t > end_time:
-                    break
-                else:
-                    x.append(t.to_sec())
-                    mat.append(filter_ins.convert(msg))
-        
+            times, msgs = self._get_topic_msgs(bag, topic_name)
+
+            sindex = bisect.bisect(times, rstart)
+            eindex = bisect.bisect(times, rend)
+
+            x = times[sindex:eindex]
+            mat = [filter_ins.convert(msgs[i]) for i in range(sindex, eindex)]
             if len(mat) == 0:
                 raise Exception("No msg of topic %s in %s"%(topic_name, bag.filename))
             mat = np.array(mat)
