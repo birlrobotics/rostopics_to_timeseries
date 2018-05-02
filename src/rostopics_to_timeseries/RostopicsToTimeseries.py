@@ -41,21 +41,27 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
         super(OnlineRostopicsToTimeseries, self).__init__(topic_filtering_config, rate)
 
     def _setup_listener(self):
-        self.filtered_msgs = [None]*self.topic_filtering_config.filter_amount
-        self.subs = [None]*self.topic_filtering_config.filter_amount
-        def cb(data, arg):
-            filter_ins, filter_count = arg
-            self.filtered_msgs[filter_count] = filter_ins.convert(data)
+        self.raw_msgs = []
+        self.filter_idx_to_msg_idx = []
+        self.subs = []
+        def cb(msg, callback_args):
+            msg_idx = callback_args
+            self.raw_msgs[msg_idx] = msg
 
-        for filter_count, i in enumerate(self.topic_filtering_config.iter_filters()):
-            topic_name, msg_type, filter_class = i
-            filter_ins = filter_class()
-            self.subs[filter_count] = rospy.Subscriber(
-                topic_name,
-                msg_type,
-                callback=cb,
-                callback_args=(filter_ins, filter_count),
-            )
+        topic_to_msg_idx = {}
+        for filter_count, (topic_name, msg_type, filter_class) in enumerate(self.topic_filtering_config.iter_filters()):
+            if topic_name not in topic_to_msg_idx:
+                self.raw_msgs.append(None)
+                topic_to_msg_idx[topic_name] = len(self.raw_msgs)-1
+
+                self.subs.append(rospy.Subscriber(
+                    topic_name,
+                    msg_type,
+                    callback=cb,
+                    callback_args=topic_to_msg_idx[topic_name],
+                ))
+
+            self.filter_idx_to_msg_idx.append(topic_to_msg_idx[topic_name])
         
     def start_publishing_timeseries(self, topic_name):
         self._setup_listener()
@@ -63,16 +69,32 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
         pub = rospy.Publisher(topic_name, Timeseries, queue_size=1000)
 
         r = rospy.Rate(self.rate)
+        timeseries_size = self.topic_filtering_config.timeseries_size
+        sample = [0]*timeseries_size
+        filter_instances = []
+        for filter_count, (topic_name, msg_type, filter_class) in enumerate(self.topic_filtering_config.iter_filters()):
+            filter_instances.append(filter_class())
         while not rospy.is_shutdown():
-            sample = copy.deepcopy(self.filtered_msgs)            
-            if len(sample) != 0:
-                try:
-                    h = std_msgs.msg.Header()
-                    h.stamp = rospy.Time.now()
-                    msg = Timeseries(h, np.concatenate(sample)) 
-                    pub.publish(msg)
-                except ValueError:
-                    rospy.logerr("Cannot concatenate %s"%sample)
+
+            idx = 0
+            for filter_idx, filter_ins in enumerate(filter_instances):
+                msg_idx = self.filter_idx_to_msg_idx[filter_idx]
+                raw_msg = self.raw_msgs[msg_idx]
+                if raw_msg is None:
+                    rospy.logwarn("Won't publish timeseries now, since no msg is received from %s"%topic_name)
+                    break
+                filtered_msg = filter_ins.convert(raw_msg)
+                for i in filtered_msg:
+                    sample[idx] = i
+                    idx += 1
+            
+
+            if idx == timeseries_size:
+                h = std_msgs.msg.Header()
+                h.stamp = rospy.Time.now()
+                msg = Timeseries(h, sample) 
+                pub.publish(msg)
+
             try:
                 r.sleep()
             except rospy.ROSInterruptException:
