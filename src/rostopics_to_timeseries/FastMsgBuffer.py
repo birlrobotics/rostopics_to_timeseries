@@ -95,20 +95,24 @@ class MsgBuffer(object):
         self.msg_buffer.append(msg)
         self.lock.release()
 
-    def get_msg_arriving_at_or_before(self, time):
+    def get_msg_arriving_at_or_before_then_clear_its_precursors(self, time):
         self.lock.acquire(True)
         idx = self.time_buffer.arg_bi_search_equal_or_just_smaller_than(time)
         if idx is None:
             self.logger.warn("Cannot find a message whose arrival time is equal or just smaller than %s"%time)
             ret = None
         else:
-            result_time = self.time_buffer.data_list[idx]
-            result_msg = self.msg_buffer.data_list[idx]
+            result_time = self.time_buffer.get(idx)
+            result_msg = self.msg_buffer.get(idx)
             self.time_buffer.clear_until(idx)
             self.msg_buffer.clear_until(idx)
             ret = (result_time, result_msg)
         self.lock.release()
         return ret
+
+    def log_debug_info(self):
+        self.time_buffer.log_debug_info()
+        self.msg_buffer.log_debug_info()
 
 def test_CircularQueue():
     c = CircularQueue(5, None)
@@ -135,6 +139,19 @@ def test_CircularQueue():
     except Exception as e:
         logger.error(e)
 
+def test_MsgBuffer():
+    mb = MsgBuffer(5)
+    mb.log_debug_info()
+    for i in range(10):
+        mb.add_new_msg(i, "data received at %s sec"%i)
+        mb.log_debug_info()
+        
+    mb.log_debug_info()
+    for i in np.arange(4, 11, 0.5):
+        ret = mb.get_msg_arriving_at_or_before_then_clear_its_precursors(i)
+        logger.info("msg_arriving_at_or_before %s: %s"%(i , ret))
+        mb.log_debug_info()
+
 if __name__ == '__main__':
     import numpy as np
 
@@ -145,4 +162,5 @@ if __name__ == '__main__':
     consoleHandler.setLevel(logging.DEBUG)
     logger.addHandler(consoleHandler)
     
-    test_CircularQueue()
+    #test_CircularQueue()
+    test_MsgBuffer()
