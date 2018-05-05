@@ -69,33 +69,49 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
         filter_instances = []
         for filter_count, (topic_name, msg_type, filter_class) in enumerate(self.topic_filtering_config.iter_filters()):
             filter_instances.append(filter_class())
+
+        step_time = 1.0/self.rate
+
+        last_ptime = rospy.Time.now().to_sec()
+
         while not rospy.is_shutdown():
-            cur_stamp = rospy.Time.now()
-            cur_time = cur_stamp.to_sec()
+            cur_time = rospy.Time.now().to_sec()
 
-            idx = 0
-            for filter_idx, filter_ins in enumerate(filter_instances):
-                msg_idx = self.filter_idx_to_msg_idx[filter_idx]
-                msg_buffer = self.msg_buffers[msg_idx]
+            ptime = last_ptime+step_time
+            ptimes = []
+            while ptime <= cur_time:
+                ptimes.append(ptime)
+                ptime += step_time
+                
+            for ptime in ptimes:
+                idx = 0
+                for filter_idx, filter_ins in enumerate(filter_instances):
+                    msg_idx = self.filter_idx_to_msg_idx[filter_idx]
+                    msg_buffer = self.msg_buffers[msg_idx]
 
-                ret = msg_buffer.get_msg_arriving_at_or_before_then_clear_its_precursors(cur_time)
+                    ret = msg_buffer.get_msg_arriving_at_or_before_then_clear_its_precursors(ptime)
 
-                if ret is None:
-                    rospy.logwarn("Won't publish timeseries now, since no msg of %s is received before %s "%(topic_name, cur_time))
+                    if ret is None:
+                        rospy.logwarn("Won't publish timeseries now, since no msg of %s is received before %s "%(topic_name, ptime))
+                        break
+
+                    result_time, result_msg = ret
+                    filtered_msg = filter_ins.convert(result_msg)
+                    for i in filtered_msg:
+                        sample[idx] = i
+                        idx += 1
+                
+
+                if idx == timeseries_size:
+                    h = std_msgs.msg.Header()
+                    h.stamp = rospy.Time(ptime)
+                    last_ptime = ptime
+                    msg = Timeseries(h, sample) 
+                    pub.publish(msg)
+                else:
+                    last_ptime = cur_time 
                     break
 
-                result_time, result_msg = ret
-                filtered_msg = filter_ins.convert(result_msg)
-                for i in filtered_msg:
-                    sample[idx] = i
-                    idx += 1
-            
-
-            if idx == timeseries_size:
-                h = std_msgs.msg.Header()
-                h.stamp = cur_stamp
-                msg = Timeseries(h, sample) 
-                pub.publish(msg)
 
             try:
                 r.sleep()
