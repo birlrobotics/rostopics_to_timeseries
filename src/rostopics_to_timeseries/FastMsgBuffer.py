@@ -140,17 +140,33 @@ def test_CircularQueue():
         logger.error(e)
 
 def test_MsgBuffer():
+    import time
     mb = MsgBuffer(5)
-    mb.log_debug_info()
-    for i in range(10):
-        mb.add_new_msg(i, "data received at %s sec"%i)
+    def func_1():
         mb.log_debug_info()
+        for i in range(10):
+            mb.add_new_msg(i, "data received at %s sec"%i)
+            mb.log_debug_info()
+            time.sleep(2)
+
+    t1 = threading.Thread(target=func_1)
+    t1.daemon = True
+    t1.start()
         
-    mb.log_debug_info()
-    for i in np.arange(4, 11, 0.5):
-        ret = mb.get_msg_arriving_at_or_before_then_clear_its_precursors(i)
-        logger.info("msg_arriving_at_or_before %s: %s"%(i , ret))
+    
+    def func_2():
         mb.log_debug_info()
+        for i in np.arange(4, 11, 0.5):
+            ret = mb.get_msg_arriving_at_or_before_then_clear_its_precursors(i)
+            logger.info("msg_arriving_at_or_before %s: %s"%(i , ret))
+            time.sleep(1)
+
+    t2 = threading.Thread(target=func_2)
+    t2.daemon = True
+    t2.start()
+
+    t1.join()
+    t2.join()
 
 if __name__ == '__main__':
     import numpy as np
