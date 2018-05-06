@@ -9,7 +9,6 @@ from scipy.interpolate import interp1d
 import bisect
 from FastMsgBuffer import MsgBuffer
 from scipy import signal
-from collections import deque
 import ipdb
 
 class RostopicsToTimeseries(object):
@@ -28,14 +27,8 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
     def __init__(self, topic_filtering_config, rate):
         super(OnlineRostopicsToTimeseries, self).__init__(topic_filtering_config, rate)
 
-        self.smooth_window_size = rate/2
-        if self.smooth_window_size%2==0:
-            self.smooth_window_size += 1
-        self.centre = self.smooth_window_size/2
-        self.smooth_cache = deque()
-        self.timeseries_size = self.topic_filtering_config.timeseries_size
-        self.running_sum = np.array([0.0]*self.timeseries_size)
-        self.msg_expiration_time = 0.1
+        self.smooth_window_size = 5
+        self.smooth_cache = []
 
     def _setup_listener(self):
         self.msg_buffers = []
@@ -72,7 +65,7 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
     def start_publishing_timeseries(self, topic_name):
         self._setup_listener()
 
-        self.pub = rospy.Publisher(topic_name, Timeseries, queue_size=1000)
+        pub = rospy.Publisher(topic_name, Timeseries, queue_size=1000)
 
         r = rospy.Rate(self.rate)
         timeseries_size = self.topic_filtering_config.timeseries_size
@@ -117,7 +110,7 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
                         break
 
                     result_time, result_msg = ret
-                    if result_time <= last_ptime-self.msg_expiration_time:
+                    if result_time <= last_ptime:
                         rospy.logwarn("Won't publish timeseries now, since no msg of %s is received after last ptime %s"%(topic_name, last_ptime))
                         break
                     filtered_msg = filter_ins.convert(result_msg)
@@ -131,7 +124,7 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
                     h.stamp = rospy.Time(ptime)
                     last_ptime = ptime
                     msg = Timeseries(h, sample) 
-                    self.smooth_pub(msg)
+                    self.smooth_pub(pub, msg)
                 else:
                     break
 
@@ -141,16 +134,8 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
                 break
 
     def smooth_pub(self, msg):
-        self.smooth_cache.append(copy.deepcopy(msg))
-        self.running_sum += msg.sample
-        if len(self.smooth_cache) == self.smooth_window_size:
-            smooth_sample = self.running_sum/self.smooth_window_size
-            msg = Timeseries(self.smooth_cache[self.centre].header, smooth_sample) 
-            self.pub.publish(msg)
-
-            ousted = self.smooth_cache.popleft()
-            self.running_sum -= ousted.sample
-            
+        self.smooth_cache.append(msg)
+        pub.publish(msg)
 
 class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
     def __init__(self, topic_filtering_config, rate):
