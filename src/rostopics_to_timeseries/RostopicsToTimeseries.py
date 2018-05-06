@@ -72,10 +72,19 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
 
         step_time = 1.0/self.rate
 
-        last_ptime = rospy.Time.now().to_sec()
+        last_ptime = None
 
         while not rospy.is_shutdown():
             cur_time = rospy.Time.now().to_sec()
+            if cur_time == 0:
+                for msg_buffer in self.msg_buffers:
+                    msg_buffer.clear_all()
+                last_ptime = None
+                rospy.loginfo("Seems rosbag has stopped playing")
+                continue
+
+            if last_ptime is None:
+                last_ptime = cur_time
 
             ptime = last_ptime+step_time
             ptimes = []
@@ -93,9 +102,13 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
 
                     if ret is None:
                         rospy.logwarn("Won't publish timeseries now, since no msg of %s is received before %s "%(topic_name, ptime))
+                        last_ptime = cur_time 
                         break
 
                     result_time, result_msg = ret
+                    if result_time <= last_ptime:
+                        rospy.logwarn("Won't publish timeseries now, since no msg of %s is received after last ptime %s"%(topic_name, last_ptime))
+                        break
                     filtered_msg = filter_ins.convert(result_msg)
                     for i in filtered_msg:
                         sample[idx] = i
@@ -109,9 +122,7 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
                     msg = Timeseries(h, sample) 
                     pub.publish(msg)
                 else:
-                    last_ptime = cur_time 
                     break
-
 
             try:
                 r.sleep()

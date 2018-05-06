@@ -95,6 +95,13 @@ class MsgBuffer(object):
         self.msg_buffer.append(msg)
         self.lock.release()
 
+
+    def clear_all(self):
+        self.lock.acquire(True)
+        self.time_buffer.clear_all()
+        self.msg_buffer.clear_all()
+        self.lock.release()
+
     def get_msg_arriving_at_or_before_then_clear_its_precursors(self, time):
         self.lock.acquire(True)
         idx = self.time_buffer.arg_bi_search_equal_or_just_smaller_than(time)
