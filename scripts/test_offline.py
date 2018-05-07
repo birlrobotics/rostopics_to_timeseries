@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from scipy import signal
 
 if __name__ == '__main__':
-    tfc = RosTopicFilteringScheme()
+    tfc = RosTopicFilteringScheme(resampling_rate=10)
     tfc.add_filter(
         "/robot/limb/right/endpoint_state", 
         baxter_core_msgs.msg.EndpointState, 
@@ -24,7 +24,7 @@ if __name__ == '__main__':
     print 'filter_amount:', tfc.filter_amount
     print 'info:', tfc.info
 
-    ofrt = OfflineRostopicsToTimeseries(tfc, rate=10) 
+    ofrt = OfflineRostopicsToTimeseries(tfc) 
     t, mat = ofrt.get_timeseries_mat("test_offline.bag")
 
     dimension = mat.shape[1] 
