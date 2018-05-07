@@ -47,6 +47,7 @@ class RosTopicFilteringScheme(object):
             self._indent_size += 4*diff
         else: 
             return " "*self._indent_size
+
     @property
     def info(self):
         info = ""
@@ -62,5 +63,6 @@ class RosTopicFilteringScheme(object):
         info += "\n"
         return info
         
-
+    def set_output_smoother(self, smoother_class):
+        pass
 
