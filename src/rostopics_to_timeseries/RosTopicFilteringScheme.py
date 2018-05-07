@@ -2,9 +2,12 @@ from rostopics_to_timeseries.TopicMsgFilter import TopicMsgFilter
 from rostopics_to_timeseries.Smoother import Smoother
 
 class RosTopicFilteringScheme(object):
-    def __init__(self):
+    def __init__(self, resampling_rate):
         pass
         self.filters = []
+        if resampling_rate <= 0:
+            raise Exception("Invalid resampling_rate: %s"%resampling_rate)
+        self.rate = resampling_rate
 
     def add_filter(self, topic_name, msg_type, filter_class):
         if not issubclass(filter_class, TopicMsgFilter):
@@ -55,20 +58,23 @@ class RosTopicFilteringScheme(object):
         info += "filtering scheme info\n"
         self._indent(+1)
 
-        info += "filters info\n"
+        info += self._indent()+"resampling rate: %s\n"%str(self.rate) 
+        info += '\n'
+
+        info += self._indent()+"smoother_class: %s\n"%str(self.smoother_class) 
+        info += '\n'
+
+        info += self._indent()+"filters info:\n"
         self._indent(+1)
-        for topic_name, msg_type, filter_class in self.iter_filters():
-            info += self._indent()+topic_name+'\n'
+        for filter_no, (topic_name, msg_type, filter_class) in enumerate(self.iter_filters()):
+            info += self._indent()+'filter No.%s: \n'%filter_no
             self._indent(+1)
-            info += self._indent()+str(msg_type)+'\n'
-            info += self._indent()+str(filter_class.vector_meaning())+'\n'
+            info += self._indent()+'topic_name: '+topic_name+'\n'
+            info += self._indent()+'msg_type: '+str(msg_type)+'\n'
+            info += self._indent()+'filter_class.vector_meaning: '+str(filter_class.vector_meaning())+'\n'
             self._indent(-1)
         self._indent(-1)
 
-        info += "smoother info\n"
-        self._indent(+1)
-        info += self._indent()+"smoother_class: %s"%str(self.smoother_class) 
-        self._indent(-1)
 
         info += "\n"
         return info

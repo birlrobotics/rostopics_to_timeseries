@@ -16,13 +16,12 @@ class RostopicsToTimeseries(object):
     """
     Args:
         topic_filtering_config: [TODO]
-        rate: Rate of time series in Hz.
     """
 
-    def __init__(self, topic_filtering_config, rate):
+    def __init__(self, topic_filtering_config):
         self.msg_filters = []
         self.topic_filtering_config = topic_filtering_config
-        self.rate = rate
+        self.rate = topic_filtering_config.rate
         
         if topic_filtering_config.smoother_class is not None:
             self.do_smoothing = True
@@ -38,17 +37,17 @@ class RostopicsToTimeseries(object):
             
 
 class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
-    def __init__(self, topic_filtering_config, rate):
-        super(OnlineRostopicsToTimeseries, self).__init__(topic_filtering_config, rate)
+    def __init__(self, topic_filtering_config):
+        super(OnlineRostopicsToTimeseries, self).__init__(topic_filtering_config)
 
-        self.smooth_window_size = rate/2
+        self.smooth_window_size = self.rate/2
         if self.smooth_window_size%2==0:
             self.smooth_window_size += 1
         self.centre = self.smooth_window_size/2
         self.smooth_cache = deque()
         self.timeseries_size = self.topic_filtering_config.timeseries_size
         self.running_sum = np.array([0.0]*self.timeseries_size)
-        self.msg_expiration_time = 2.0/rate
+        self.msg_expiration_time = 2.0/self.rate
 
     def _setup_listener(self):
         self.msg_buffers = []
@@ -169,8 +168,8 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
             
 
 class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
-    def __init__(self, topic_filtering_config, rate):
-        super(OfflineRostopicsToTimeseries, self).__init__(topic_filtering_config, rate)
+    def __init__(self, topic_filtering_config):
+        super(OfflineRostopicsToTimeseries, self).__init__(topic_filtering_config)
         pass
 
     def _get_topic_msgs(self, bag, topic_name):
