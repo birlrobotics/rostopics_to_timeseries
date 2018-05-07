@@ -2,10 +2,12 @@
 
 from rostopics_to_timeseries.RostopicsToTimeseries import OfflineRostopicsToTimeseries
 from rostopics_to_timeseries.TopicMsgFilter import TopicMsgFilter, BaxterEndpointStateFilter
+from rostopics_to_timeseries.Smoother import WindowBasedSmoother_factory
 from rostopics_to_timeseries.RosTopicFilteringScheme import RosTopicFilteringScheme
 import baxter_core_msgs.msg
 import rospy
 import matplotlib.pyplot as plt
+from scipy import signal
 
 if __name__ == '__main__':
     tfc = RosTopicFilteringScheme()
@@ -14,6 +16,8 @@ if __name__ == '__main__':
         baxter_core_msgs.msg.EndpointState, 
         BaxterEndpointStateFilter,
     )
+
+    tfc.smoother_class = WindowBasedSmoother_factory(signal.triang(51))
 
     print 'timeseries_header:', tfc.timeseries_header
     print 'timeseries_size:', tfc.timeseries_size
