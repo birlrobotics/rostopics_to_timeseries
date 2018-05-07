@@ -10,11 +10,11 @@ class Smoother(object):
         raise Exception("Unimplemented")
 
 
-class BoxcarSmoother(Smoother):
+class WindowBasedSmoother(Smoother):
     window = None
     def __init__(self):
         if self.window is None:
-            raise Exception("BoxcarSmoother is not meant to be instantiated. Please use function \"sized_BoxcarSmoother_factory\" to get an usable class.")
+            raise Exception("WindowBasedSmoother is not meant to be instantiated. Please use function \"WindowBasedSmoother_factory\" to get an usable class.")
 
         self.size = len(self.window)
         self.convex_window = (self.window/self.window.sum()).reshape(1, -1)
@@ -31,27 +31,27 @@ class BoxcarSmoother(Smoother):
         return ret
             
             
-def sized_BoxcarSmoother_factory(window):
-    newclass = type("BoxcarSmootherWithWindow%s"%(window), (BoxcarSmoother,),{'window': window})
+def WindowBasedSmoother_factory(window):
+    newclass = type("WindowBasedSmootherWithWindow%s"%(window), (WindowBasedSmoother,),{'window': window})
     return newclass
 
 if __name__ == '__main__':
     from scipy import signal
 
     try:
-        b = BoxcarSmoother()
+        b = WindowBasedSmoother()
     except Exception as e:
         print e
 
     window = signal.triang(5)
-    C = sized_BoxcarSmoother_factory(window)
+    C = WindowBasedSmoother_factory(window)
     c = C()
     print str(C)
     for i in range(10):
         print i, c.add_one_sample_and_get_smoothed_result([i*i+j for j in range(7)]) 
 
     window = signal.boxcar(5)
-    C = sized_BoxcarSmoother_factory(window)
+    C = WindowBasedSmoother_factory(window)
     c = C()
     print str(C)
     for i in range(10):

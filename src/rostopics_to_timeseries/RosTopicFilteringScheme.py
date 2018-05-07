@@ -1,4 +1,5 @@
 from rostopics_to_timeseries.TopicMsgFilter import TopicMsgFilter
+from rostopics_to_timeseries.Smoother import Smoother
 
 class RosTopicFilteringScheme(object):
     def __init__(self):
@@ -7,7 +8,7 @@ class RosTopicFilteringScheme(object):
 
     def add_filter(self, topic_name, msg_type, filter_class):
         if not issubclass(filter_class, TopicMsgFilter):
-            raise Exception("Filter to be added is not of subclass of TopicMsgFilter.")
+            raise Exception("Filter class to be added is not a subclass of TopicMsgFilter.")
         self.filters.append(
             (
                 topic_name,
@@ -62,7 +63,18 @@ class RosTopicFilteringScheme(object):
         self._indent(-1)
         info += "\n"
         return info
-        
-    def set_output_smoother(self, smoother_class):
-        pass
+
+    @property
+    def smoother_class(self):
+        if hasattr(self, "smoother_class_"):
+            return self.smoother_class_
+        else:
+            return None
+    
+    @smoother_class.setter
+    def smoother_class(self, cls):
+        if not issubclass(cls, Smoother):
+            raise Exception("Smoother class to be set is not a subclass of Smoother.")
+        self.smoother_class_= cls
+
 
