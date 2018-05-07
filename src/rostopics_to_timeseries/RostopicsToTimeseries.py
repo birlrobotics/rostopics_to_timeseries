@@ -23,6 +23,19 @@ class RostopicsToTimeseries(object):
         self.msg_filters = []
         self.topic_filtering_config = topic_filtering_config
         self.rate = rate
+        
+        if topic_filtering_config.smoother_class is not None:
+            self.do_smoothing = True
+            self.smoother = topic_filtering_config.smoother_class()
+        else:
+            self.do_smoothing = False
+
+    def smooth_output(self, sample):
+        if not self.do_smoothing:
+            return sample
+        else:
+            return self.smoother.add_one_sample_and_get_smoothed_result(sample)
+            
 
 class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
     def __init__(self, topic_filtering_config, rate):
@@ -130,8 +143,11 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
                     h = std_msgs.msg.Header()
                     h.stamp = rospy.Time(ptime)
                     last_ptime = ptime
-                    msg = Timeseries(h, sample) 
-                    self.smooth_pub(msg)
+
+                    smoothed_sample = self.smooth_output(sample)
+                    if smoothed_sample is not None:
+                        msg = Timeseries(h, smoothed_sample) 
+                        self.smooth_pub(msg)
                 else:
                     break
 
@@ -212,7 +228,17 @@ class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
 
             new_mat = f(new_x)
 
+
             mats.append(new_mat)
 
         big_mat = np.concatenate(mats, axis=1)
-        return new_x, big_mat
+
+        smoothed_x = []
+        smoothed_mat = []
+        for i in range(big_mat.shape[0]):
+            smoothed_sample = self.smooth_output(big_mat[i])
+            if smoothed_sample is not None:
+                smoothed_mat.append(smoothed_sample)
+                smoothed_x.append(new_x[i])
+
+        return smoothed_x, np.array(smoothed_mat) 

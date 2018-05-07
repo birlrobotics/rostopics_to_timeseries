@@ -54,6 +54,9 @@ class RosTopicFilteringScheme(object):
         info = ""
         info += "filtering scheme info\n"
         self._indent(+1)
+
+        info += "filters info\n"
+        self._indent(+1)
         for topic_name, msg_type, filter_class in self.iter_filters():
             info += self._indent()+topic_name+'\n'
             self._indent(+1)
@@ -61,6 +64,12 @@ class RosTopicFilteringScheme(object):
             info += self._indent()+str(filter_class.vector_meaning())+'\n'
             self._indent(-1)
         self._indent(-1)
+
+        info += "smoother info\n"
+        self._indent(+1)
+        info += self._indent()+"smoother_class: %s"%str(self.smoother_class) 
+        self._indent(-1)
+
         info += "\n"
         return info
 
