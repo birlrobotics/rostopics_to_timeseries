@@ -35,7 +35,7 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
         self.smooth_cache = deque()
         self.timeseries_size = self.topic_filtering_config.timeseries_size
         self.running_sum = np.array([0.0]*self.timeseries_size)
-        self.msg_expiration_time = 0.1
+        self.msg_expiration_time = 2.0/rate
 
     def _setup_listener(self):
         self.msg_buffers = []
@@ -118,7 +118,7 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
 
                     result_time, result_msg = ret
                     if result_time <= last_ptime-self.msg_expiration_time:
-                        rospy.logwarn("Won't publish timeseries now, since no msg of %s is received after last ptime %s"%(topic_name, last_ptime))
+                        rospy.logwarn("Won't publish timeseries now, since no msg of %s is received after last ptime %s, current ptime %s, current result_time %s"%(topic_name, last_ptime, ptime, result_time))
                         break
                     filtered_msg = filter_ins.convert(result_msg)
                     for i in filtered_msg:
