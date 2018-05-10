@@ -23,6 +23,8 @@ class RostopicsToTimeseries(object):
         self.msg_filters = []
         self.topic_filtering_config = topic_filtering_config
         self.rate = topic_filtering_config.rate
+
+        self.logger = logging.getLogger("RostopicsToTimeseries")
         
         self.setup_smoothing()
 
@@ -74,6 +76,7 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
                     filter_class.get_time(msg_type())
                     timestamp_extractor = filter_class.get_time
                 except:
+                    self.logger.warn("Message of topic %s contains no header, gonna use rospy.Time.now()"%topic_name)
                     timestamp_extractor = lambda x: rospy.Time.now()
 
                 self.subs.append(rospy.Subscriber(
@@ -186,8 +189,9 @@ class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
                 try: 
                     t = msg.header.stamp
                 except AttributeError:
-                     
                     t = record_t
+                    self.logger.warn("Message of topic %s contains no header, gonna use its recording time"%topic_name)
+
                 times.append(t.to_sec())
                 msgs.append(msg)
             bag.cache[topic_name] = (times, msgs)
