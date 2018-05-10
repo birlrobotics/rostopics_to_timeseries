@@ -10,6 +10,7 @@ import bisect
 from FastMsgBuffer import MsgBuffer
 from scipy import signal
 from collections import deque
+import logging
 import ipdb
 
 class RostopicsToTimeseries(object):
@@ -23,9 +24,12 @@ class RostopicsToTimeseries(object):
         self.topic_filtering_config = topic_filtering_config
         self.rate = topic_filtering_config.rate
         
-        if topic_filtering_config.smoother_class is not None:
+        self.setup_smoothing()
+
+    def setup_smoothing(self):
+        if self.topic_filtering_config.smoother_class is not None:
             self.do_smoothing = True
-            self.smoother = topic_filtering_config.smoother_class()
+            self.smoother = self.topic_filtering_config.smoother_class()
         else:
             self.do_smoothing = False
 
@@ -130,7 +134,7 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
 
                     result_time, result_msg = ret
                     if result_time <= last_ptime-self.msg_expiration_time:
-                        rospy.logwarn("Won't publish timeseries now, since no msg of %s is received after last ptime %s, current ptime %s, current result_time %s"%(topic_name, last_ptime, ptime, result_time))
+                        #rospy.logwarn("Won't publish timeseries now, since no msg of %s is received after last ptime %s, current ptime %s, current result_time %s"%(topic_name, last_ptime, ptime, result_time))
                         break
                     filtered_msg = filter_ins.convert(result_msg)
                     for i in filtered_msg:
@@ -182,6 +186,7 @@ class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
                 try: 
                     t = msg.header.stamp
                 except AttributeError:
+                     
                     t = record_t
                 times.append(t.to_sec())
                 msgs.append(msg)
@@ -231,6 +236,8 @@ class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
             mats.append(new_mat)
 
         big_mat = np.concatenate(mats, axis=1)
+
+        self.setup_smoothing()
 
         smoothed_x = []
         smoothed_mat = []
