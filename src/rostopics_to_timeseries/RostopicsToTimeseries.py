@@ -59,6 +59,7 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
         self.msg_buffers = []
 
         self.filter_idx_to_msg_idx = []
+        self.filter_idx_to_topic_name = []
         self.subs = []
         def cb(msg, callback_args):
             msg_buffer, timestamp_extractor = callback_args
@@ -87,6 +88,7 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
                 ))
 
             self.filter_idx_to_msg_idx.append(topic_to_msg_idx[topic_name])
+            self.filter_idx_to_topic_name.append(topic_name)
         
     def start_publishing_timeseries(self, topic_name):
         self._setup_listener()
@@ -131,7 +133,7 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
                     ret = msg_buffer.get_msg_arriving_at_or_before_then_clear_its_precursors(ptime)
 
                     if ret is None:
-                        rospy.logwarn("Won't publish timeseries now, since no msg of %s is received before %s "%(topic_name, ptime))
+                        rospy.logwarn("Won't publish timeseries now, since no msg of %s is received before %s "%(self.filter_idx_to_topic_name[filter_idx], ptime))
                         last_ptime = cur_time 
                         break
 
