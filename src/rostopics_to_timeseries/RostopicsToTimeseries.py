@@ -231,7 +231,7 @@ class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
             x = times[sindex:eindex]
             mat = [filter_ins.convert(msgs[i]) for i in range(sindex, eindex)]
             if len(mat) == 0:
-                raise Exception("No msg of topic %s in %s"%(topic_name, bag.filename))
+                raise Exception("No msg of topic %s between %s and %s in %s"%(topic_name, rstart, rend, bag.filename))
             mat = np.array(mat)
 
             f = interp1d(x, mat, axis=0, kind='nearest', fill_value='extrapolate', assume_sorted=True)
