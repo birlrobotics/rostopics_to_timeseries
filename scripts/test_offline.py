@@ -1,13 +1,21 @@
 #!/usr/bin/env python
 
-from rostopics_to_timeseries.RostopicsToTimeseries import OfflineRostopicsToTimeseries
-from rostopics_to_timeseries.TopicMsgFilter import TopicMsgFilter, BaxterEndpointStateFilter, BaxterEndpointStateFilterForTwistLinear
+from rostopics_to_timeseries import (
+    RosTopicFilteringScheme, 
+    TopicMsgFilter,
+    OfflineRostopicsToTimeseries, 
+)
+
+from rostopics_to_timeseries.TopicMsgFilter import BaxterEndpointStateFilter, BaxterEndpointStateFilterForTwistLinear
 from rostopics_to_timeseries.Smoother import WindowBasedSmoother_factory
-from rostopics_to_timeseries.RosTopicFilteringScheme import RosTopicFilteringScheme
+
 import baxter_core_msgs.msg
 import rospy
 import matplotlib.pyplot as plt
 from scipy import signal
+import os
+
+dir_of_this_script = os.path.dirname(os.path.realpath(__file__))
 
 if __name__ == '__main__':
     tfc = RosTopicFilteringScheme(resampling_rate=10)
@@ -23,6 +31,7 @@ if __name__ == '__main__':
     )
 
     tfc.smoother_class = WindowBasedSmoother_factory(signal.triang(51))
+    tfc.smoother_class = None
 
     print 'timeseries_header:', tfc.timeseries_header
     print 'timeseries_size:', tfc.timeseries_size
@@ -30,7 +39,7 @@ if __name__ == '__main__':
     print 'info:', tfc.info
 
     ofrt = OfflineRostopicsToTimeseries(tfc) 
-    t, mat = ofrt.get_timeseries_mat("test_offline.bag")
+    t, mat = ofrt.get_timeseries_mat(os.path.join(dir_of_this_script, "test_offline.bag"))
 
     dimension = mat.shape[1] 
     fig, axs = plt.subplots(nrows=dimension, ncols=1)
