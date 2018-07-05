@@ -36,6 +36,25 @@ class BaxterEndpointStateFilter(TopicMsgFilter):
     def vector_meaning():
         return ['pose.position.%s'%i for i in ['x', 'y', 'z']] 
 
+class BaxterEndpointStateFilterForTwistLinear(TopicMsgFilter):
+    def __init__(self):
+        super(BaxterEndpointStateFilterForTwistLinear, self).__init__()
+
+    def convert(self, msg):
+        return [\
+            msg.twist.linear.x,\
+            msg.twist.linear.y,\
+            msg.twist.linear.z,\
+        ]
+
+    @staticmethod
+    def vector_size():
+        return 3
+
+    @staticmethod
+    def vector_meaning():
+        return ['twist.linear.%s'%i for i in ['x', 'y', 'z']] 
+
 class WrenchStampedFilter(TopicMsgFilter):
     def __init__(self):
         super(WrenchStampedFilter, self).__init__()

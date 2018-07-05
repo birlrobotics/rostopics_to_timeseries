@@ -88,7 +88,7 @@ class RosTopicFilteringScheme(object):
     
     @smoother_class.setter
     def smoother_class(self, cls):
-        if not issubclass(cls, Smoother):
+        if not issubclass(cls, Smoother) and cls is not None:
             raise Exception("Smoother class to be set is not a subclass of Smoother.")
         self.smoother_class_= cls
 

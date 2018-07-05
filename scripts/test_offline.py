@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from rostopics_to_timeseries.RostopicsToTimeseries import OfflineRostopicsToTimeseries
-from rostopics_to_timeseries.TopicMsgFilter import TopicMsgFilter, BaxterEndpointStateFilter
+from rostopics_to_timeseries.TopicMsgFilter import TopicMsgFilter, BaxterEndpointStateFilter, BaxterEndpointStateFilterForTwistLinear
 from rostopics_to_timeseries.Smoother import WindowBasedSmoother_factory
 from rostopics_to_timeseries.RosTopicFilteringScheme import RosTopicFilteringScheme
 import baxter_core_msgs.msg
@@ -15,6 +15,11 @@ if __name__ == '__main__':
         "/robot/limb/right/endpoint_state", 
         baxter_core_msgs.msg.EndpointState, 
         BaxterEndpointStateFilter,
+    )
+    tfc.add_filter(
+        "/robot/limb/right/endpoint_state", 
+        baxter_core_msgs.msg.EndpointState, 
+        BaxterEndpointStateFilterForTwistLinear,
     )
 
     tfc.smoother_class = WindowBasedSmoother_factory(signal.triang(51))
@@ -37,5 +42,6 @@ if __name__ == '__main__':
         x = t
         y = mat[:, dim_idx]
         ax.plot(x, y, 'ro')
+        ax.set_title("index %s: %s"%(dim_idx, tfc.timeseries_header[dim_idx]))
 
     plt.show()
