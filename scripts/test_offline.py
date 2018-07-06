@@ -39,7 +39,7 @@ if __name__ == '__main__':
     print 'info:', tfc.info
 
     ofrt = OfflineRostopicsToTimeseries(tfc) 
-    t, mat = ofrt.get_timeseries_mat(os.path.join(dir_of_this_script, "test_offline.bag"))
+    t, mat = ofrt.get_timeseries_mat(os.path.join(dir_of_this_script, '..', "data_for_test", "data.bag"))
 
     dimension = mat.shape[1] 
     fig, axs = plt.subplots(nrows=dimension, ncols=1)
