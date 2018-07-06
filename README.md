@@ -15,15 +15,15 @@ We want to have a tool that combines data from multiple ROS topics into a synchr
   Process topics in a rosbag file and extract a time series matrix from it.
   
 # How To Use This Package 
-[TODO]
 
-# Demo
-- Online
-[TODO]
+## Online Demo
 
-- Offline
-[TODO]
+```bash
+roslaunch rostopics_to_timeseries test_offline.launch
+```
 
+## Offline Demo
 
-# Minimal Tutorial
-[TODO]
+```bash
+rosrun rostopics_to_timeseries test_offline.py 
+```
