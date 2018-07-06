@@ -19,7 +19,7 @@ We want to have a tool that combines data from multiple ROS topics into a synchr
 ## Online Demo
 
 ```bash
-roslaunch rostopics_to_timeseries test_offline.launch
+roslaunch rostopics_to_timeseries test_online.launch
 ```
 
 ## Offline Demo
