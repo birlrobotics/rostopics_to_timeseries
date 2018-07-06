@@ -16,7 +16,8 @@ import ipdb
 class RostopicsToTimeseries(object):
     """
     Args:
-        topic_filtering_config: [TODO]
+        topic_filtering_config: instance of RosTopicFilteringScheme
+            containing configuration of timeseries.
     """
 
     def __init__(self, topic_filtering_config):

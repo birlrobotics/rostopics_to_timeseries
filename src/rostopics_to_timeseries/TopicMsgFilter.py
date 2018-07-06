@@ -3,18 +3,42 @@ class TopicMsgFilter(object):
         pass
 
     def convert(self, msg):
+        """function for filtering a message
+        Args:
+            msg: message to be filtered.
+        
+        Returns:
+            a list of numbers which is one frame of the timeseries
+        """
+
         raise Exception("Unimplemented")
 
     @staticmethod
     def vector_size():
+        """
+        Returns: number of dimensions of the timeseries.
+        """
+
         raise Exception("Unimplemented")
 
     @staticmethod
     def vector_meaning():
+        """
+        Returns: a list of string indicating the meaning of 
+            each dimension of the timeseries.
+        """
+
         raise Exception("Unimplemented")
 
     @staticmethod
     def get_time(msg):
+        """Extract time from a message
+        Args:
+            msg: the message whose time is to be extracted
+
+        Returns: an instance of <class 'genpy.rostime.Time'>
+        """
+
         return msg.header.stamp
 
 class BaxterEndpointStateFilter(TopicMsgFilter):

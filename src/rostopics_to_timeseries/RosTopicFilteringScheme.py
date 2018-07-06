@@ -2,6 +2,11 @@ from rostopics_to_timeseries.TopicMsgFilter import TopicMsgFilter
 from rostopics_to_timeseries.Smoother import Smoother
 
 class RosTopicFilteringScheme(object):
+    """A class for configuring timeseries merging.
+    Args:
+        resampling_rate: sampling rate of timeseries.
+    """
+
     def __init__(self, resampling_rate):
         pass
         self.filters = []
@@ -10,6 +15,17 @@ class RosTopicFilteringScheme(object):
         self.rate = resampling_rate
 
     def add_filter(self, topic_name, msg_type, filter_class):
+        """Add a filter to fillter message from a specific topic.
+        Args:
+            topic_name: name of topic in string.
+
+            msg_type: type of message of the topic.
+
+            filter_class: class of message filer, has to be a subclass
+                of TopicMsgFilter.
+        """
+
+
         if not issubclass(filter_class, TopicMsgFilter):
             raise Exception("Filter class to be added is not a subclass of TopicMsgFilter.")
         self.filters.append(
