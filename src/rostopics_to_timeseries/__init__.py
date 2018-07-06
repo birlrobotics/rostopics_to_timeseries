@@ -1,3 +1,3 @@
-from RostopicsToTimeseries import OfflineRostopicsToTimeseries
+from RostopicsToTimeseries import OfflineRostopicsToTimeseries, OnlineRostopicsToTimeseries
 from RosTopicFilteringScheme import RosTopicFilteringScheme
 from TopicMsgFilter import TopicMsgFilter

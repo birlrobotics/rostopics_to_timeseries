@@ -1,0 +1,7 @@
+
+<launch>
+    <param name="/use_sim_time" value="true"/>
+    <node pkg="rosbag" type="play" name="rosbag_node" output="screen" args="--clock $(find rostopics_to_timeseries)/data_for_test/data.bag"/>
+    <node pkg="rostopics_to_timeseries" type="test_online.py" name="test_online_node" output="screen"/>
+    <node pkg="rostopics_to_timeseries" type="plot_timeseries.py" name="plot_timeseries_node" output="screen"/>
+</launch>
