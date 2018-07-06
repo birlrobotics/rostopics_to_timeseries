@@ -157,7 +157,7 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
                     smoothed_sample = self.smooth_output(sample)
                     if smoothed_sample is not None:
                         msg = Timeseries(h, smoothed_sample) 
-                        self.smooth_pub(msg)
+                        self.pub.publish(msg)
                 else:
                     break
 
@@ -165,18 +165,6 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
                 r.sleep()
             except rospy.ROSInterruptException:
                 break
-
-    def smooth_pub(self, msg):
-        self.smooth_cache.append(copy.deepcopy(msg))
-        self.running_sum += msg.sample
-        if len(self.smooth_cache) == self.smooth_window_size:
-            smooth_sample = self.running_sum/self.smooth_window_size
-            msg = Timeseries(self.smooth_cache[self.centre].header, smooth_sample) 
-            self.pub.publish(msg)
-
-            ousted = self.smooth_cache.popleft()
-            self.running_sum -= ousted.sample
-            
 
 class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
     def __init__(self, topic_filtering_config):
