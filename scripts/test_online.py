@@ -12,10 +12,12 @@ import baxter_core_msgs.msg
 import rospy
 from rostopics_to_timeseries.Smoother import WindowBasedSmoother_factory
 from scipy import signal
+import time
 
 if __name__ == '__main__':
-    rospy.init_node("test_RostopicsToTimeseries")
-    rospy.sleep(3)
+    rospy.init_node("test_RostopicsToTimeseries_node")
+    rospy.loginfo("test_RostopicsToTimeseries_node will now sleep 3 seconds")
+    time.sleep(3)
     tfc = RosTopicFilteringScheme(resampling_rate=10)
     tfc.add_filter(
         "/robot/limb/right/endpoint_state", 
@@ -28,7 +30,7 @@ if __name__ == '__main__':
         BaxterEndpointStateFilterForTwistLinear,
     )
 
-    tfc.smoother_class = WindowBasedSmoother_factory(signal.triang(51))
+    tfc.smoother_class = WindowBasedSmoother_factory(signal.triang(5))
 
     onrt = OnlineRostopicsToTimeseries(tfc) 
     onrt.start_publishing_timeseries("/rostopics_to_timeseries_topic")

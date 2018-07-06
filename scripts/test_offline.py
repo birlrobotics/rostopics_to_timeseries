@@ -30,7 +30,7 @@ if __name__ == '__main__':
         BaxterEndpointStateFilterForTwistLinear,
     )
 
-    tfc.smoother_class = WindowBasedSmoother_factory(signal.triang(51))
+    tfc.smoother_class = WindowBasedSmoother_factory(signal.triang(5))
     tfc.smoother_class = None
 
     print 'timeseries_header:', tfc.timeseries_header

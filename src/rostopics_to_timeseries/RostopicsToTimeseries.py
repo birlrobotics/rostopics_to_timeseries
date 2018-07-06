@@ -94,6 +94,7 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
         self._setup_listener()
 
         self.pub = rospy.Publisher(topic_name, Timeseries, queue_size=1000)
+        rospy.loginfo("Timeseries publisher created")
 
         r = rospy.Rate(self.rate)
         timeseries_size = self.topic_filtering_config.timeseries_size
