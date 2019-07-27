@@ -198,12 +198,18 @@ class OfflineRostopicsToTimeseries(RostopicsToTimeseries):
 
         if start_time is None:
             rstart = bag.get_start_time()
-        else:
+        elif type(start_time) == rospy.Time:
             rstart = start_time.to_sec()
+        else:
+            assert type(start_time) == float
+            rstart = start_time
         if end_time is None:
             rend = bag.get_end_time()
-        else:
+        elif type(end_time) == rospy.Time:
             rend = end_time.to_sec()
+        else:
+            assert type(end_time) == float
+            rend = end_time
 
         new_x = np.arange(rstart, rend, 1.0/self.rate)
 
