@@ -16,8 +16,6 @@ import time
 
 if __name__ == '__main__':
     rospy.init_node("test_RostopicsToTimeseries_node")
-    rospy.loginfo("test_RostopicsToTimeseries_node will now sleep 3 seconds")
-    time.sleep(3)
     tfc = RosTopicFilteringScheme(resampling_rate=10)
     tfc.add_filter(
         "/robot/limb/right/endpoint_state", 
@@ -33,4 +31,14 @@ if __name__ == '__main__':
     tfc.smoother_class = WindowBasedSmoother_factory(signal.triang(5))
 
     onrt = OnlineRostopicsToTimeseries(tfc) 
+
+    print 'test non blocking'
+    onrt.start_publishing_timeseries("/rostopics_to_timeseries_topic", blocking=False)
+    print 'should be publishing now. check rostopic echo'
+    print 'hit enter to stop'
+    raw_input()
+    onrt.stop_publishing_timeseries()
+    print 'should stop publishing now. check rostopic echo'
+    print 'hit enter to start testing blocking'
+    raw_input()
     onrt.start_publishing_timeseries("/rostopics_to_timeseries_topic")

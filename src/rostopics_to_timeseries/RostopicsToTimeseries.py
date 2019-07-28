@@ -12,6 +12,7 @@ from scipy import signal
 from collections import deque
 import logging
 import ipdb
+from threading import Thread
 
 class RostopicsToTimeseries(object):
     """
@@ -55,6 +56,8 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
         self.timeseries_size = self.topic_filtering_config.timeseries_size
         self.running_sum = np.array([0.0]*self.timeseries_size)
         self.msg_expiration_time = 2.0/self.rate
+        self.publishing_thread = None
+        self.stop_thread_flag = False
 
     def _setup_listener(self):
         self.msg_buffers = []
@@ -90,8 +93,38 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
 
             self.filter_idx_to_msg_idx.append(topic_to_msg_idx[topic_name])
             self.filter_idx_to_topic_name.append(topic_name)
-        
-    def start_publishing_timeseries(self, topic_name):
+
+    def start_publishing_timeseries(self, topic_name, blocking=True):
+        if self.publishing_thread is not None:
+            raise Exception('already publishing')
+
+        publishing_thread = Thread(target=self._start_publishing_timeseries, args=(topic_name,))
+        publishing_thread.setDaemon(True)
+
+        self.publishing_thread = publishing_thread 
+        self.stop_thread_flag = False
+
+        self.publishing_thread.start()
+
+        if blocking:
+            rospy.spin() 
+            self.stop_thread_flag = True
+            self._wait_for_thread_to_stop()
+
+    def stop_publishing_timeseries(self):
+        if self.publishing_thread is None:
+            return
+
+        self.stop_thread_flag = True
+        self._wait_for_thread_to_stop()
+
+    def _wait_for_thread_to_stop(self):
+        if self.publishing_thread is None:
+            return
+        self.publishing_thread.join()
+        self.publishing_thread = None
+
+    def _start_publishing_timeseries(self, topic_name):
         self._setup_listener()
 
         self.pub = rospy.Publisher(topic_name, Timeseries, queue_size=1000)
@@ -108,7 +141,7 @@ class OnlineRostopicsToTimeseries(RostopicsToTimeseries):
 
         last_ptime = None
 
-        while not rospy.is_shutdown():
+        while not self.stop_thread_flag:
             cur_time = rospy.Time.now().to_sec()
             if cur_time == 0:
                 for msg_buffer in self.msg_buffers:
